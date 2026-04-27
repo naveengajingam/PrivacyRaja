@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResultRouteImport } from './routes/result'
 import { Route as MultiplayerSetupRouteImport } from './routes/multiplayer-setup'
 import { Route as ModeSelectRouteImport } from './routes/mode-select'
-import { Route as LobbyRouteImport } from './routes/lobby'
 import { Route as GameRouteImport } from './routes/game'
 import { Route as AvatarSelectRouteImport } from './routes/avatar-select'
 import { Route as IndexRouteImport } from './routes/index'
@@ -30,11 +29,6 @@ const MultiplayerSetupRoute = MultiplayerSetupRouteImport.update({
 const ModeSelectRoute = ModeSelectRouteImport.update({
   id: '/mode-select',
   path: '/mode-select',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LobbyRoute = LobbyRouteImport.update({
-  id: '/lobby',
-  path: '/lobby',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GameRoute = GameRouteImport.update({
@@ -57,7 +51,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/avatar-select': typeof AvatarSelectRoute
   '/game': typeof GameRoute
-  '/lobby': typeof LobbyRoute
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
@@ -66,7 +59,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/avatar-select': typeof AvatarSelectRoute
   '/game': typeof GameRoute
-  '/lobby': typeof LobbyRoute
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
@@ -76,7 +68,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/avatar-select': typeof AvatarSelectRoute
   '/game': typeof GameRoute
-  '/lobby': typeof LobbyRoute
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
@@ -87,7 +78,6 @@ export interface FileRouteTypes {
     | '/'
     | '/avatar-select'
     | '/game'
-    | '/lobby'
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
@@ -96,7 +86,6 @@ export interface FileRouteTypes {
     | '/'
     | '/avatar-select'
     | '/game'
-    | '/lobby'
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
@@ -105,7 +94,6 @@ export interface FileRouteTypes {
     | '/'
     | '/avatar-select'
     | '/game'
-    | '/lobby'
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
@@ -115,7 +103,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AvatarSelectRoute: typeof AvatarSelectRoute
   GameRoute: typeof GameRoute
-  LobbyRoute: typeof LobbyRoute
   ModeSelectRoute: typeof ModeSelectRoute
   MultiplayerSetupRoute: typeof MultiplayerSetupRoute
   ResultRoute: typeof ResultRoute
@@ -142,13 +129,6 @@ declare module '@tanstack/react-router' {
       path: '/mode-select'
       fullPath: '/mode-select'
       preLoaderRoute: typeof ModeSelectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lobby': {
-      id: '/lobby'
-      path: '/lobby'
-      fullPath: '/lobby'
-      preLoaderRoute: typeof LobbyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/game': {
@@ -179,7 +159,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AvatarSelectRoute: AvatarSelectRoute,
   GameRoute: GameRoute,
-  LobbyRoute: LobbyRoute,
   ModeSelectRoute: ModeSelectRoute,
   MultiplayerSetupRoute: MultiplayerSetupRoute,
   ResultRoute: ResultRoute,
@@ -187,3 +166,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
