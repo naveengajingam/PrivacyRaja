@@ -133,11 +133,15 @@ function IdleOrbit() {
   return (
     <OrbitControls
       ref={controlsRef}
+      makeDefault
       minPolarAngle={0.3}
       maxPolarAngle={1.2}
       enablePan={false}
-      minDistance={10}
-      maxDistance={22}
+      enableZoom
+      zoomSpeed={0.9}
+      rotateSpeed={0.8}
+      minDistance={IS_MOBILE ? 8 : 10}
+      maxDistance={IS_MOBILE ? 28 : 22}
       autoRotate={false}
       onStart={() => { idleSignal.lastInteract = performance.now(); }}
       onChange={() => { idleSignal.lastInteract = performance.now(); }}
