@@ -1,6 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SceneShell } from "@/components/SceneShell";
-import { MughalFrame } from "@/components/MughalFrame";
+import { useGameStore } from "@/store/useGameStore";
+import { TILES, type Tile } from "@/game/tiles";
+import { getTilePosition } from "@/game/boardLayout";
+import { getAvatar } from "@/game/avatars";
+import { loadMcqBank, getMcqForPrinciple, type MCQ } from "@/game/mcqService";
 
 export const Route = createFileRoute("/game")({
   head: () => ({
@@ -9,31 +15,821 @@ export const Route = createFileRoute("/game")({
       { name: "description", content: "Roll the fire-dice. Conquer the principles." },
     ],
   }),
-  component: Page,
+  component: GameScreen,
 });
 
-function Page() {
+// =====================================================
+// Top-level Game Screen
+// =====================================================
+function GameScreen() {
+  const navigate = useNavigate();
+  const phase = useGameStore((s) => s.phase);
+  const players = useGameStore((s) => s.players);
+  const setupPlayers = useGameStore((s) => s.setupPlayers);
+  const winnerId = useGameStore((s) => s.winnerId);
+
+  // Safety: if user lands on /game without setup, push them to avatar select
+  useEffect(() => {
+    if (players.length === 0) {
+      navigate({ to: "/avatar-select" });
+    }
+  }, [players.length, navigate]);
+
+  // Navigate to result when game ends
+  useEffect(() => {
+    if (phase === "gameover") {
+      const id = setTimeout(() => navigate({ to: "/result" }), 600);
+      return () => clearTimeout(id);
+    }
+  }, [phase, navigate, winnerId]);
+
+  // MCQ bank load
+  const [bank, setBank] = useState<MCQ[] | null>(null);
+  useEffect(() => {
+    loadMcqBank().then(setBank).catch(console.error);
+  }, []);
+
+  if (players.length === 0) return null;
+  void setupPlayers;
+
   return (
     <SceneShell>
-      <main className="flex min-h-screen items-center justify-center px-6 py-16">
-        <div className="w-full max-w-3xl">
-          <MughalFrame>
-            <h1 className="text-gold-glow text-center font-display text-3xl md:text-4xl">
-              The Battlefield
-            </h1>
-            <p className="mt-4 text-center font-serif italic text-[var(--foreground)]/75">
-              The 3D board awaits its summoning.
-            </p>
-            <p className="mt-8 text-center text-sm text-[var(--gold-soft)]/70">
-              Coming in a future prompt.
-            </p>
-            <div className="mt-8 flex justify-center gap-4">
-              <Link to="/" className="text-xs uppercase tracking-[0.4em] text-[var(--gold-soft)]/70 hover:text-[var(--gold)]">← Hall</Link>
-              <Link to="/result" className="text-xs uppercase tracking-[0.4em] text-[var(--gold-soft)]/70 hover:text-[var(--gold)]">Preview Result →</Link>
-            </div>
-          </MughalFrame>
+      <div className="relative flex min-h-screen flex-col">
+        <TopHud />
+        <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:flex-row md:px-6">
+          <LeftPanel />
+          <BoardArea bank={bank} />
+          <RightPanel />
         </div>
-      </main>
+        <ToastStack />
+        <ModalLayer bank={bank} />
+      </div>
     </SceneShell>
+  );
+}
+
+// =====================================================
+// Top HUD
+// =====================================================
+function TopHud() {
+  const round = useGameStore((s) => s.round);
+  const players = useGameStore((s) => s.players);
+  const idx = useGameStore((s) => s.currentPlayerIndex);
+  const dice = useGameStore((s) => s.dice);
+  const player = players[idx];
+  const av = getAvatar(player?.avatar);
+
+  return (
+    <header className="relative z-20 flex items-center justify-between gap-4 px-4 py-3 md:px-8">
+      <div className="flex items-center gap-3">
+        <div className="font-body text-[10px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/70">
+          Round
+        </div>
+        <div className="font-display text-2xl text-gold-glow">{round}</div>
+      </div>
+
+      <div className="flex items-center gap-3 rounded-full border border-[var(--gold)]/40 bg-[oklch(0.14_0.05_285_/_0.85)] px-4 py-2 backdrop-blur-md">
+        {av && (
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-full text-base"
+            style={{ background: av.color, boxShadow: `0 0 10px ${av.glow}` }}
+          >
+            {av.symbol}
+          </span>
+        )}
+        <span className="font-display text-sm text-[var(--gold)]">{player?.name}</span>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--gold-soft)]/60">
+          {av?.english}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <span className="font-body text-[10px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/70">
+          Last Roll
+        </span>
+        <motion.span
+          key={dice.value}
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 240, damping: 12 }}
+          className="font-display text-3xl"
+          style={{
+            color: "#FF9933",
+            textShadow: "0 0 16px #FF9933, 0 0 32px #D4A017",
+          }}
+        >
+          {dice.value}
+        </motion.span>
+      </div>
+    </header>
+  );
+}
+
+// =====================================================
+// Left Panel — current player details
+// =====================================================
+function LeftPanel() {
+  const players = useGameStore((s) => s.players);
+  const idx = useGameStore((s) => s.currentPlayerIndex);
+  const tileStates = useGameStore((s) => s.tileStates);
+  const player = players[idx];
+  const av = getAvatar(player?.avatar);
+  if (!player) return null;
+
+  const grouped = {
+    saffron: [] as { tile: Tile; layers: number }[],
+    white: [] as { tile: Tile; layers: number }[],
+    green: [] as { tile: Tile; layers: number }[],
+  };
+  for (const idx of player.ownedTiles) {
+    const t = TILES[idx];
+    if (t.colorGroup) {
+      const ts = tileStates.find((s) => s.tileIndex === idx);
+      grouped[t.colorGroup].push({ tile: t, layers: ts?.layers ?? 0 });
+    }
+  }
+
+  return (
+    <aside className="w-full shrink-0 rounded-2xl border border-[var(--gold)]/30 bg-[oklch(0.14_0.05_285_/_0.85)] p-4 backdrop-blur-md md:w-64">
+      <div className="mb-4 flex items-center gap-3">
+        {av && (
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl"
+            style={{
+              background: "linear-gradient(180deg, oklch(0.22 0.08 285), oklch(0.14 0.05 285))",
+              border: `1px solid ${av.color}`,
+              boxShadow: `0 0 12px ${av.glow}`,
+            }}
+          >
+            {av.symbol}
+          </div>
+        )}
+        <div>
+          <div className="font-display text-lg text-gold-glow">{player.name}</div>
+          <div className="font-body text-[10px] uppercase tracking-[0.3em] text-[var(--gold-soft)]/70">
+            {av?.name} · {av?.english}
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-4 rounded-xl border border-[var(--gold)]/25 bg-[oklch(0.18_0.05_285)] p-3">
+        <div className="font-body text-[10px] uppercase tracking-[0.3em] text-[var(--gold-soft)]/70">Cash</div>
+        <div className="font-display text-2xl text-[var(--saffron)] ember-text">
+          ₹{player.cash}
+        </div>
+      </div>
+
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        <Stat label="Skip Tokens" value={String(player.mcqSkipTokens)} />
+        <Stat label="MCQs Won" value={`${player.mcqsCorrect}/${player.mcqsTotal}`} />
+      </div>
+
+      <div className="mb-2 mt-4 font-body text-[10px] uppercase tracking-[0.3em] text-[var(--gold-soft)]/70">
+        Owned Principles
+      </div>
+      {(["saffron", "white", "green"] as const).map((g) => (
+        <div key={g} className="mb-2">
+          <div className="mb-1 flex items-center gap-2">
+            <span
+              className="h-2 w-6 rounded-full"
+              style={{ background: g === "saffron" ? "#FF9933" : g === "white" ? "#FFFFFF" : "#138808" }}
+            />
+            <span className="font-body text-[10px] uppercase tracking-[0.3em] text-[var(--foreground)]/60">{g}</span>
+          </div>
+          {grouped[g].length === 0 ? (
+            <div className="text-xs text-[var(--foreground)]/40">—</div>
+          ) : (
+            grouped[g].map(({ tile, layers }) => (
+              <div key={tile.index} className="flex items-center justify-between rounded-md px-2 py-1 text-xs text-[var(--foreground)]/85">
+                <span className="truncate">{tile.name}</span>
+                <span className="text-[var(--gold)]">{"●".repeat(layers) || "·"}</span>
+              </div>
+            ))
+          )}
+        </div>
+      ))}
+    </aside>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-[var(--gold)]/20 px-2 py-1.5">
+      <div className="font-body text-[9px] uppercase tracking-[0.25em] text-[var(--gold-soft)]/60">{label}</div>
+      <div className="font-display text-sm text-[var(--gold)]">{value}</div>
+    </div>
+  );
+}
+
+// =====================================================
+// Right Panel — event log
+// =====================================================
+function RightPanel() {
+  const log = useGameStore((s) => s.log);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.scrollTo({ top: 1e6, behavior: "smooth" });
+  }, [log.length]);
+  return (
+    <aside className="w-full shrink-0 rounded-2xl border border-[var(--gold)]/30 bg-[oklch(0.14_0.05_285_/_0.85)] p-4 backdrop-blur-md md:w-64">
+      <div className="mb-3 font-body text-[10px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/70">
+        Battle Chronicle
+      </div>
+      <div ref={ref} className="max-h-[60vh] space-y-1.5 overflow-y-auto pr-1 text-xs leading-relaxed">
+        {log.map((line, i) => (
+          <div
+            key={i}
+            className="rounded-md border border-transparent px-2 py-1 text-[var(--foreground)]/80 hover:border-[var(--gold)]/20"
+          >
+            {line}
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+// =====================================================
+// Board Area — 11x11 grid with tiles, avatars, dice center
+// =====================================================
+function BoardArea({ bank }: { bank: MCQ[] | null }) {
+  const players = useGameStore((s) => s.players);
+  const tileStates = useGameStore((s) => s.tileStates);
+  const idx = useGameStore((s) => s.currentPlayerIndex);
+  const phase = useGameStore((s) => s.phase);
+  const dice = useGameStore((s) => s.dice);
+  const rollDice = useGameStore((s) => s.rollDice);
+  const finishMovement = useGameStore((s) => s.finishMovement);
+  const resolveLanding = useGameStore((s) => s.resolveLanding);
+  const endTurn = useGameStore((s) => s.endTurn);
+  const setMcqContext = useGameStore((s) => s.setMcqContext);
+  const round = useGameStore((s) => s.round);
+
+  // Animate avatar movement tile-by-tile when phase = 'moving'
+  const [animatingPos, setAnimatingPos] = useState<Record<string, number>>({});
+  useEffect(() => {
+    // initial placement
+    const init: Record<string, number> = {};
+    for (const p of players) init[p.id] = p.position;
+    setAnimatingPos(init);
+  }, [players.length]);
+
+  useEffect(() => {
+    if (phase !== "moving") return;
+    const player = players[idx];
+    if (!player) return;
+    const startPos = animatingPos[player.id] ?? player.position;
+    const targetPos = (startPos + dice.value) % 28;
+    let cur = startPos;
+    let cancelled = false;
+    function step() {
+      if (cancelled) return;
+      cur = (cur + 1) % 28;
+      setAnimatingPos((prev) => ({ ...prev, [player.id]: cur }));
+      if (cur === targetPos) {
+        // commit
+        setTimeout(() => {
+          if (!cancelled) finishMovement();
+        }, 250);
+      } else {
+        setTimeout(step, 320);
+      }
+    }
+    setTimeout(step, 200);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  // After finishMovement → phase = 'resolving' → resolve once
+  useEffect(() => {
+    if (phase !== "resolving") return;
+    const tile = resolveLanding();
+    // If the resolved tile required MCQ, populate the question
+    setTimeout(() => {
+      const ctx = useGameStore.getState().mcq;
+      if (ctx && bank && tile.principleId) {
+        const q = getMcqForPrinciple(bank, tile.principleId, round);
+        if (q) {
+          setMcqContext({
+            ...ctx,
+            questionId: q.id,
+            question: q.question,
+            options: q.options,
+            correctIndex: q.correctIndex,
+            principle: q.principle,
+          });
+        }
+      }
+    }, 50);
+  }, [phase, resolveLanding, bank, round, setMcqContext]);
+
+  // Auto-end turn after a beat when phase = 'turn-end'
+  useEffect(() => {
+    if (phase !== "turn-end") return;
+    // sync animating pos to actual after turn end
+    const t = setTimeout(() => {
+      setAnimatingPos((prev) => {
+        const next = { ...prev };
+        for (const p of players) next[p.id] = p.position;
+        return next;
+      });
+      endTurn();
+    }, 900);
+    return () => clearTimeout(t);
+  }, [phase, endTurn, players]);
+
+  // Player markers grouped by displayed tile
+  const playersByTile = useMemo(() => {
+    const map: Record<number, typeof players> = {};
+    for (const p of players) {
+      if (p.isBankrupt) continue;
+      const pos = animatingPos[p.id] ?? p.position;
+      (map[pos] ||= []).push(p);
+    }
+    return map;
+  }, [players, animatingPos]);
+
+  return (
+    <div className="relative flex flex-1 items-center justify-center">
+      <div
+        className="relative aspect-square w-full max-w-[min(78vh,720px)] rounded-3xl border-2 border-[var(--gold)]/40 p-2 shadow-[0_30px_80px_-20px_oklch(0_0_0_/_0.7)]"
+        style={{
+          background:
+            "radial-gradient(circle at center, oklch(0.18 0.07 285) 0%, oklch(0.1 0.03 285) 100%)",
+        }}
+      >
+        <div
+          className="grid h-full w-full gap-[2px]"
+          style={{
+            gridTemplateColumns: "repeat(11, 1fr)",
+            gridTemplateRows: "repeat(11, 1fr)",
+          }}
+        >
+          {TILES.map((t) => {
+            const pos = getTilePosition(t.index);
+            const ts = tileStates.find((s) => s.tileIndex === t.index);
+            const owner = ts?.ownerId ? players.find((p) => p.id === ts.ownerId) : null;
+            const occupants = playersByTile[t.index] ?? [];
+            return (
+              <BoardTile
+                key={t.index}
+                tile={t}
+                row={pos.row}
+                col={pos.col}
+                ownerColor={owner ? getAvatar(owner.avatar)?.color ?? null : null}
+                layers={ts?.layers ?? 0}
+                occupants={occupants.length}
+                occupantsList={occupants}
+              />
+            );
+          })}
+
+          {/* Center area for dice */}
+          <div
+            className="flex flex-col items-center justify-center"
+            style={{ gridColumn: "3 / span 7", gridRow: "3 / span 7" }}
+          >
+            <DiceCenter
+              value={dice.value}
+              isRolling={dice.isRolling}
+              canRoll={phase === "rolling"}
+              onRoll={rollDice}
+              phaseLabel={phase}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BoardTile({
+  tile,
+  row,
+  col,
+  ownerColor,
+  layers,
+  occupants,
+  occupantsList,
+}: {
+  tile: Tile;
+  row: number;
+  col: number;
+  ownerColor: string | null;
+  layers: number;
+  occupants: number;
+  occupantsList: { id: string; name: string; avatar: string | null }[];
+}) {
+  const bg = tileBackground(tile);
+  const isCorner =
+    tile.type === "go" ||
+    tile.type === "jail" ||
+    tile.type === "free_parking" ||
+    tile.type === "go_to_jail";
+
+  return (
+    <div
+      style={{ gridRow: row, gridColumn: col }}
+      className="relative overflow-hidden rounded-md border border-[oklch(0.13_0.04_285_/_0.6)]"
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background: bg,
+        }}
+      />
+      {/* color stripe for principle tiles */}
+      {tile.colorGroup && (
+        <div
+          className="absolute left-0 right-0 top-0 h-1.5"
+          style={{
+            background:
+              tile.colorGroup === "saffron"
+                ? "#FF9933"
+                : tile.colorGroup === "white"
+                  ? "#FFFFFF"
+                  : "#138808",
+          }}
+        />
+      )}
+
+      <div className="relative flex h-full flex-col justify-between p-1">
+        <div
+          className={`text-[7px] leading-[1.05] ${
+            isCorner ? "text-center font-display text-[9px] uppercase text-[var(--gold)]" : "text-[var(--foreground)]/85"
+          }`}
+          style={{ wordBreak: "break-word" }}
+        >
+          {tile.name}
+        </div>
+
+        {/* layer dots */}
+        {layers > 0 && (
+          <div className="flex justify-center gap-0.5">
+            {Array.from({ length: layers }).map((_, i) => (
+              <span
+                key={i}
+                className="h-1 w-1 rounded-full"
+                style={{ background: "#D4A017", boxShadow: "0 0 4px #D4A017" }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* owner stripe */}
+        {ownerColor && (
+          <div
+            className="absolute bottom-0 left-0 right-0 h-1"
+            style={{ background: ownerColor, boxShadow: `0 0 6px ${ownerColor}` }}
+          />
+        )}
+
+        {/* occupant avatars */}
+        {occupants > 0 && (
+          <div className="absolute inset-x-0 bottom-1 flex flex-wrap justify-center gap-0.5">
+            {occupantsList.map((p, i) => {
+              const av = getAvatar(p.avatar as never);
+              return (
+                <motion.span
+                  key={p.id}
+                  layoutId={`avatar-${p.id}`}
+                  transition={{ type: "spring", stiffness: 240, damping: 18 }}
+                  className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px]"
+                  style={{
+                    background: av?.color ?? "#fff",
+                    boxShadow: `0 0 6px ${av?.glow ?? "#fff"}`,
+                    transform: `translateX(${(i - (occupants - 1) / 2) * 2}px)`,
+                  }}
+                >
+                  {av?.symbol}
+                </motion.span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function tileBackground(t: Tile): string {
+  switch (t.type) {
+    case "go": return "linear-gradient(135deg, #1A1A4E, #0d0d2e)";
+    case "jail": return "linear-gradient(135deg, #1A1A4E, #2a1a4e)";
+    case "free_parking": return "linear-gradient(135deg, #1A1A4E, #1a4e3a)";
+    case "go_to_jail": return "linear-gradient(135deg, #4e1a1a, #2a1a1a)";
+    case "chance": return "linear-gradient(135deg, #2d1654, #4a2480)";
+    case "community": return "linear-gradient(135deg, #1a4e1a, #267026)";
+    case "tax": return "linear-gradient(135deg, #5a1a1a, #7a2424)";
+    case "utility": return "linear-gradient(135deg, #2a2a55, #1a1a4e)";
+    case "principle":
+      return "linear-gradient(180deg, oklch(0.22 0.06 285), oklch(0.16 0.05 285))";
+  }
+}
+
+// =====================================================
+// Center dice
+// =====================================================
+function DiceCenter({
+  value,
+  isRolling,
+  canRoll,
+  onRoll,
+  phaseLabel,
+}: {
+  value: number;
+  isRolling: boolean;
+  canRoll: boolean;
+  onRoll: () => void;
+  phaseLabel: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="text-center">
+        <div className="font-body text-[9px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/60">
+          Phase
+        </div>
+        <div className="font-display text-base text-[var(--gold)]">{phaseLabel}</div>
+      </div>
+      <motion.button
+        onClick={onRoll}
+        disabled={!canRoll || isRolling}
+        animate={isRolling ? { rotate: [0, 360, 720] } : { rotate: 0 }}
+        transition={isRolling ? { duration: 0.7, ease: "easeOut" } : { duration: 0.3 }}
+        whileHover={canRoll && !isRolling ? { scale: 1.05 } : {}}
+        whileTap={canRoll && !isRolling ? { scale: 0.92 } : {}}
+        className="relative flex h-24 w-24 items-center justify-center rounded-2xl text-5xl font-display disabled:opacity-60"
+        style={{
+          background: "linear-gradient(180deg, #FFE9A8, #D4A017 60%, #6e4f0c)",
+          border: "2px solid #FFE9A8",
+          boxShadow:
+            "0 0 32px oklch(0.78 0.18 50 / 0.55), inset 0 0 18px oklch(0.13 0.04 285 / 0.3)",
+          color: "#1A1A4E",
+        }}
+        aria-label="Roll dice"
+      >
+        {isRolling ? "?" : value}
+      </motion.button>
+      <div className="text-center font-body text-[10px] uppercase tracking-[0.3em] text-[var(--gold-soft)]/60">
+        {canRoll ? "Tap to roll the fire-die" : "Watch the realm respond"}
+      </div>
+    </div>
+  );
+}
+
+// =====================================================
+// Modal Layer
+// =====================================================
+function ModalLayer({ bank }: { bank: MCQ[] | null }) {
+  const phase = useGameStore((s) => s.phase);
+  const mcq = useGameStore((s) => s.mcq);
+  const buy = useGameStore((s) => s.buy);
+  const build = useGameStore((s) => s.build);
+  const card = useGameStore((s) => s.card);
+  const tax = useGameStore((s) => s.tax);
+
+  return (
+    <AnimatePresence>
+      {phase === "mcq" && mcq && mcq.question && <MCQModal />}
+      {phase === "buying" && buy && <BuyModal />}
+      {phase === "building" && build && <BuildModal />}
+      {phase === "card" && card && <CardModal />}
+      {phase === "tax" && tax && <TaxModal />}
+    </AnimatePresence>
+  );
+  void bank;
+}
+
+function ModalShell({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[oklch(0.05_0.02_285_/_0.75)] p-4 backdrop-blur-md"
+    >
+      <motion.div
+        initial={{ y: 30, opacity: 0, scale: 0.95 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 30, opacity: 0, scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 220, damping: 22 }}
+        className="relative w-full max-w-lg rounded-3xl p-[2px]"
+        style={{
+          background: "linear-gradient(135deg, #FF9933 0%, #FFFFFF 50%, #138808 100%)",
+        }}
+      >
+        <div className="relative rounded-[1.4rem] bg-[oklch(0.14_0.05_285_/_0.97)] p-7">
+          {["left-3 top-3", "right-3 top-3", "left-3 bottom-3", "right-3 bottom-3"].map((p) => (
+            <span key={p} className={`absolute ${p} h-2 w-2 rounded-full bg-[var(--gold)] shadow-[0_0_8px_var(--gold)]`} />
+          ))}
+          {children}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function MCQModal() {
+  const mcq = useGameStore((s) => s.mcq)!;
+  const answer = useGameStore((s) => s.answerMcq);
+  const useSkip = useGameStore((s) => s.useSkipToken);
+  const players = useGameStore((s) => s.players);
+  const idx = useGameStore((s) => s.currentPlayerIndex);
+  const player = players[idx];
+  const tile = TILES[mcq.tileIndex];
+
+  return (
+    <ModalShell>
+      <div className="mb-2 font-body text-[10px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/70">
+        Principle Challenge · {tile.name}
+      </div>
+      <h2 className="text-gold-glow mb-1 font-display text-xl">
+        {mcq.reason === "purchase" ? "Answer to Acquire" : `Answer to Waive ₹${mcq.rentOwed} Rent`}
+      </h2>
+      <p className="mb-5 font-serif text-[var(--foreground)]/90">{mcq.question}</p>
+      <div className="space-y-2">
+        {mcq.options.map((opt, i) => (
+          <button
+            key={i}
+            onClick={() => answer(i)}
+            className="group block w-full rounded-xl border border-[var(--gold)]/25 bg-[oklch(0.18_0.05_285)] px-4 py-3 text-left text-sm transition hover:border-[var(--gold)]/70 hover:bg-[oklch(0.22_0.06_285)]"
+          >
+            <span className="mr-2 inline-block w-5 font-display text-[var(--gold)]">
+              {String.fromCharCode(65 + i)}.
+            </span>
+            <span className="text-[var(--foreground)]/90">{opt}</span>
+          </button>
+        ))}
+      </div>
+      {player.mcqSkipTokens > 0 && (
+        <button
+          onClick={() => useSkip()}
+          className="mt-4 rounded-full border border-[var(--gold)]/40 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--gold)] hover:bg-[var(--gold)]/10"
+        >
+          Use Skip Token ({player.mcqSkipTokens})
+        </button>
+      )}
+    </ModalShell>
+  );
+}
+
+function BuyModal() {
+  const buy = useGameStore((s) => s.buy)!;
+  const buyTile = useGameStore((s) => s.buyTile);
+  const tile = TILES[buy.tileIndex];
+  const players = useGameStore((s) => s.players);
+  const idx = useGameStore((s) => s.currentPlayerIndex);
+  const cash = players[idx].cash;
+  const canAfford = cash >= buy.price;
+  return (
+    <ModalShell>
+      <div className="mb-2 font-body text-[10px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/70">
+        Acquire Principle
+      </div>
+      <h2 className="text-gold-glow mb-3 font-display text-2xl">{tile.name}</h2>
+      <p className="mb-5 font-serif italic text-[var(--foreground)]/85">
+        Claim this tile for ₹{buy.price}? Owning it grants rent on opponent visits and unlocks Compliance Layers when you control the full {tile.colorGroup} group.
+      </p>
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => buyTile(false)}
+          className="rounded-full border border-[var(--gold)]/30 px-5 py-2 font-body text-sm text-[var(--gold-soft)]/80 hover:bg-[var(--gold)]/5"
+        >
+          Decline
+        </button>
+        <button
+          onClick={() => buyTile(true)}
+          disabled={!canAfford}
+          className="rounded-full px-5 py-2 font-display text-sm text-[oklch(0.13_0.04_285)] disabled:opacity-50"
+          style={{
+            background: "linear-gradient(180deg, #FFE9A8 0%, #D4A017 60%, #8a6510 100%)",
+          }}
+        >
+          {canAfford ? `Buy for ₹${buy.price}` : "Not enough cash"}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
+function BuildModal() {
+  const build = useGameStore((s) => s.build)!;
+  const buildLayer = useGameStore((s) => s.buildLayer);
+  const tile = TILES[build.tileIndex];
+  return (
+    <ModalShell>
+      <div className="mb-2 font-body text-[10px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/70">
+        Build Compliance Layer {build.currentLayers + 1}
+      </div>
+      <h2 className="text-gold-glow mb-3 font-display text-2xl">{tile.name}</h2>
+      <p className="mb-5 font-serif italic text-[var(--foreground)]/85">
+        Reinforce this principle for ₹{build.cost}. Rent multiplier rises to ×{[2, 4, 8, 16][build.currentLayers]}.
+      </p>
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => buildLayer(false)}
+          className="rounded-full border border-[var(--gold)]/30 px-5 py-2 font-body text-sm text-[var(--gold-soft)]/80"
+        >
+          Skip
+        </button>
+        <button
+          onClick={() => buildLayer(true)}
+          className="rounded-full px-5 py-2 font-display text-sm text-[oklch(0.13_0.04_285)]"
+          style={{ background: "linear-gradient(180deg, #FFE9A8 0%, #D4A017 60%, #8a6510 100%)" }}
+        >
+          Build for ₹{build.cost}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
+function CardModal() {
+  const card = useGameStore((s) => s.card)!;
+  const apply = useGameStore((s) => s.applyCard);
+  const isBonus = card.deck === "bonus";
+  return (
+    <ModalShell>
+      <div
+        className="mb-2 font-body text-[10px] uppercase tracking-[0.4em]"
+        style={{ color: isBonus ? "#138808" : "#FF9933" }}
+      >
+        {isBonus ? "Compliance Bonus" : "Data Breach"}
+      </div>
+      <h2 className="text-gold-glow mb-3 font-display text-2xl">
+        {isBonus ? "🌟 Reward of the Realm" : "⚠ Breach Detected"}
+      </h2>
+      <p className="mb-6 font-serif text-lg italic text-[var(--foreground)]/90">{card.card.text}</p>
+      <div className="flex justify-end">
+        <button
+          onClick={apply}
+          className="rounded-full px-6 py-2 font-display text-sm text-[oklch(0.13_0.04_285)]"
+          style={{ background: "linear-gradient(180deg, #FFE9A8 0%, #D4A017 60%, #8a6510 100%)" }}
+        >
+          Accept Fate →
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
+function TaxModal() {
+  const tax = useGameStore((s) => s.tax)!;
+  const apply = useGameStore((s) => s.applyTax);
+  return (
+    <ModalShell>
+      <div className="mb-2 font-body text-[10px] uppercase tracking-[0.4em] text-[var(--saffron)]">
+        DPDPA Penalty
+      </div>
+      <h2 className="text-gold-glow mb-3 font-display text-2xl">⚖ {TILES[tax.tileIndex].name}</h2>
+      <p className="mb-6 font-serif italic text-lg text-[var(--foreground)]/90">
+        The Board levies a penalty of ₹{tax.amount}.
+      </p>
+      <div className="flex justify-end">
+        <button
+          onClick={apply}
+          className="rounded-full px-6 py-2 font-display text-sm text-[oklch(0.13_0.04_285)]"
+          style={{ background: "linear-gradient(180deg, #FFE9A8 0%, #D4A017 60%, #8a6510 100%)" }}
+        >
+          Pay ₹{tax.amount}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
+// =====================================================
+// Toast Stack
+// =====================================================
+function ToastStack() {
+  const toasts = useGameStore((s) => s.toasts);
+  return (
+    <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-2 px-4">
+      <AnimatePresence>
+        {toasts.map((t) => {
+          const tone =
+            t.tone === "success" ? "#138808" :
+            t.tone === "danger" ? "#c0392b" :
+            t.tone === "gold" ? "#D4A017" : "#1A1A4E";
+          return (
+            <motion.div
+              key={t.id}
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="rounded-full px-4 py-2 text-xs"
+              style={{
+                background: `linear-gradient(180deg, ${tone}, oklch(0.14 0.05 285))`,
+                border: `1px solid ${tone}`,
+                boxShadow: `0 0 20px ${tone}55`,
+                color: "#fff",
+              }}
+            >
+              {t.text}
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+    </div>
   );
 }
