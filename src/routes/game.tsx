@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SceneShell } from "@/components/SceneShell";
 import { useGameStore } from "@/store/useGameStore";
 import { TILES, type Tile } from "@/game/tiles";
-import { getTilePosition } from "@/game/boardLayout";
-import { getAvatar } from "@/game/avatars";
+import { getAvatar, type ElementId } from "@/game/avatars";
 import { loadMcqBank, getMcqForPrinciple, type MCQ } from "@/game/mcqService";
+import Board3D from "@/components/board3d/Board3D";
 
 export const Route = createFileRoute("/game")({
   head: () => ({
@@ -349,233 +349,74 @@ function BoardArea({ bank }: { bank: MCQ[] | null }) {
     return map;
   }, [players, animatingPos]);
 
+  // Build ownerColors map for 3D board
+  const ownerColors = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const p of players) {
+      const av = getAvatar(p.avatar);
+      if (av) m[p.id] = av.color;
+    }
+    return m;
+  }, [players]);
+
+  const activeElement: ElementId | null = (players[idx]?.avatar ?? null) as ElementId | null;
+  const highlightTile = phase === "resolving" || phase === "mcq" || phase === "buying" || phase === "building" || phase === "card" || phase === "tax"
+    ? players[idx]?.position ?? null
+    : null;
+
+  // 'positions' map for Board3D (displayed tile per player)
+  const displayedPositions = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const p of players) m[p.id] = animatingPos[p.id] ?? p.position;
+    return m;
+  }, [players, animatingPos]);
+
   return (
     <div className="relative flex flex-1 items-center justify-center">
       <div
-        className="relative aspect-square w-full max-w-[min(78vh,720px)] rounded-3xl border-2 border-[var(--gold)]/40 p-2 shadow-[0_30px_80px_-20px_oklch(0_0_0_/_0.7)]"
+        className="relative aspect-square w-full max-w-[min(78vh,720px)] overflow-hidden rounded-3xl border-2 border-[var(--gold)]/40 shadow-[0_30px_80px_-20px_oklch(0_0_0_/_0.7)]"
         style={{
           background:
-            "radial-gradient(circle at center, oklch(0.18 0.07 285) 0%, oklch(0.1 0.03 285) 100%)",
+            "radial-gradient(circle at center, oklch(0.18 0.07 285) 0%, oklch(0.06 0.02 285) 100%)",
         }}
       >
-        <div
-          className="grid h-full w-full gap-[2px]"
-          style={{
-            gridTemplateColumns: "repeat(11, 1fr)",
-            gridTemplateRows: "repeat(11, 1fr)",
-          }}
-        >
-          {TILES.map((t) => {
-            const pos = getTilePosition(t.index);
-            const ts = tileStates.find((s) => s.tileIndex === t.index);
-            const owner = ts?.ownerId ? players.find((p) => p.id === ts.ownerId) : null;
-            const occupants = playersByTile[t.index] ?? [];
-            return (
-              <BoardTile
-                key={t.index}
-                tile={t}
-                row={pos.row}
-                col={pos.col}
-                ownerColor={owner ? getAvatar(owner.avatar)?.color ?? null : null}
-                layers={ts?.layers ?? 0}
-                occupants={occupants.length}
-                occupantsList={occupants}
-              />
-            );
-          })}
-
-          {/* Center area for dice */}
-          <div
-            className="flex flex-col items-center justify-center"
-            style={{ gridColumn: "3 / span 7", gridRow: "3 / span 7" }}
-          >
-            <DiceCenter
-              value={dice.value}
-              isRolling={dice.isRolling}
-              canRoll={phase === "rolling"}
-              onRoll={rollDice}
-              phaseLabel={phase}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BoardTile({
-  tile,
-  row,
-  col,
-  ownerColor,
-  layers,
-  occupants,
-  occupantsList,
-}: {
-  tile: Tile;
-  row: number;
-  col: number;
-  ownerColor: string | null;
-  layers: number;
-  occupants: number;
-  occupantsList: { id: string; name: string; avatar: string | null }[];
-}) {
-  const bg = tileBackground(tile);
-  const isCorner =
-    tile.type === "go" ||
-    tile.type === "jail" ||
-    tile.type === "free_parking" ||
-    tile.type === "go_to_jail";
-
-  return (
-    <div
-      style={{ gridRow: row, gridColumn: col }}
-      className="relative overflow-hidden rounded-md border border-[oklch(0.13_0.04_285_/_0.6)]"
-    >
-      <div
-        className="absolute inset-0"
-        style={{
-          background: bg,
-        }}
-      />
-      {/* color stripe for principle tiles */}
-      {tile.colorGroup && (
-        <div
-          className="absolute left-0 right-0 top-0 h-1.5"
-          style={{
-            background:
-              tile.colorGroup === "saffron"
-                ? "#FF9933"
-                : tile.colorGroup === "white"
-                  ? "#FFFFFF"
-                  : "#138808",
-          }}
+        <Board3D
+          players={players.map((p) => ({ id: p.id, avatar: p.avatar, isBankrupt: p.isBankrupt }))}
+          tileStates={tileStates}
+          positions={displayedPositions}
+          highlightTile={highlightTile}
+          ownerColors={ownerColors}
+          diceValue={dice.value}
+          isRolling={dice.isRolling}
+          onRollDice={rollDice}
+          canRoll={phase === "rolling"}
+          activeElement={activeElement}
         />
-      )}
 
-      <div className="relative flex h-full flex-col justify-between p-1">
-        <div
-          className={`text-[7px] leading-[1.05] ${
-            isCorner ? "text-center font-display text-[9px] uppercase text-[var(--gold)]" : "text-[var(--foreground)]/85"
-          }`}
-          style={{ wordBreak: "break-word" }}
-        >
-          {tile.name}
+        {/* Phase indicator + fallback roll button (bottom-center overlay) */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-2">
+          <div className="pointer-events-auto rounded-full border border-[var(--gold)]/30 bg-[oklch(0.1_0.03_285_/_0.85)] px-4 py-1.5 backdrop-blur-md">
+            <span className="font-body text-[9px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/70 mr-2">Phase</span>
+            <span className="font-display text-sm text-[var(--gold)]">{phase}</span>
+          </div>
+          {phase === "rolling" && (
+            <button
+              onClick={rollDice}
+              disabled={dice.isRolling}
+              className="pointer-events-auto rounded-full px-6 py-2 font-display text-sm tracking-widest text-[oklch(0.13_0.04_285)] shadow-[0_0_24px_rgba(255,153,51,0.6)] disabled:opacity-60"
+              style={{ background: "linear-gradient(180deg, #FFE9A8 0%, #D4A017 60%, #8a6510 100%)" }}
+            >
+              {dice.isRolling ? "Rolling…" : "⚡ Tap Fire-Die"}
+            </button>
+          )}
         </div>
-
-        {/* layer dots */}
-        {layers > 0 && (
-          <div className="flex justify-center gap-0.5">
-            {Array.from({ length: layers }).map((_, i) => (
-              <span
-                key={i}
-                className="h-1 w-1 rounded-full"
-                style={{ background: "#D4A017", boxShadow: "0 0 4px #D4A017" }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* owner stripe */}
-        {ownerColor && (
-          <div
-            className="absolute bottom-0 left-0 right-0 h-1"
-            style={{ background: ownerColor, boxShadow: `0 0 6px ${ownerColor}` }}
-          />
-        )}
-
-        {/* occupant avatars */}
-        {occupants > 0 && (
-          <div className="absolute inset-x-0 bottom-1 flex flex-wrap justify-center gap-0.5">
-            {occupantsList.map((p, i) => {
-              const av = getAvatar(p.avatar as never);
-              return (
-                <motion.span
-                  key={p.id}
-                  layoutId={`avatar-${p.id}`}
-                  transition={{ type: "spring", stiffness: 240, damping: 18 }}
-                  className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px]"
-                  style={{
-                    background: av?.color ?? "#fff",
-                    boxShadow: `0 0 6px ${av?.glow ?? "#fff"}`,
-                    transform: `translateX(${(i - (occupants - 1) / 2) * 2}px)`,
-                  }}
-                >
-                  {av?.symbol}
-                </motion.span>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-function tileBackground(t: Tile): string {
-  switch (t.type) {
-    case "go": return "linear-gradient(135deg, #1A1A4E, #0d0d2e)";
-    case "jail": return "linear-gradient(135deg, #1A1A4E, #2a1a4e)";
-    case "free_parking": return "linear-gradient(135deg, #1A1A4E, #1a4e3a)";
-    case "go_to_jail": return "linear-gradient(135deg, #4e1a1a, #2a1a1a)";
-    case "chance": return "linear-gradient(135deg, #2d1654, #4a2480)";
-    case "community": return "linear-gradient(135deg, #1a4e1a, #267026)";
-    case "tax": return "linear-gradient(135deg, #5a1a1a, #7a2424)";
-    case "utility": return "linear-gradient(135deg, #2a2a55, #1a1a4e)";
-    case "principle":
-      return "linear-gradient(180deg, oklch(0.22 0.06 285), oklch(0.16 0.05 285))";
-  }
-}
+// (2D tile/dice helpers removed — replaced by Board3D)
 
-// =====================================================
-// Center dice
-// =====================================================
-function DiceCenter({
-  value,
-  isRolling,
-  canRoll,
-  onRoll,
-  phaseLabel,
-}: {
-  value: number;
-  isRolling: boolean;
-  canRoll: boolean;
-  onRoll: () => void;
-  phaseLabel: string;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="text-center">
-        <div className="font-body text-[9px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/60">
-          Phase
-        </div>
-        <div className="font-display text-base text-[var(--gold)]">{phaseLabel}</div>
-      </div>
-      <motion.button
-        onClick={onRoll}
-        disabled={!canRoll || isRolling}
-        animate={isRolling ? { rotate: [0, 360, 720] } : { rotate: 0 }}
-        transition={isRolling ? { duration: 0.7, ease: "easeOut" } : { duration: 0.3 }}
-        whileHover={canRoll && !isRolling ? { scale: 1.05 } : {}}
-        whileTap={canRoll && !isRolling ? { scale: 0.92 } : {}}
-        className="relative flex h-24 w-24 items-center justify-center rounded-2xl text-5xl font-display disabled:opacity-60"
-        style={{
-          background: "linear-gradient(180deg, #FFE9A8, #D4A017 60%, #6e4f0c)",
-          border: "2px solid #FFE9A8",
-          boxShadow:
-            "0 0 32px oklch(0.78 0.18 50 / 0.55), inset 0 0 18px oklch(0.13 0.04 285 / 0.3)",
-          color: "#1A1A4E",
-        }}
-        aria-label="Roll dice"
-      >
-        {isRolling ? "?" : value}
-      </motion.button>
-      <div className="text-center font-body text-[10px] uppercase tracking-[0.3em] text-[var(--gold-soft)]/60">
-        {canRoll ? "Tap to roll the fire-die" : "Watch the realm respond"}
-      </div>
-    </div>
-  );
-}
 
 // =====================================================
 // Modal Layer
