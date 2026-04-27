@@ -7,6 +7,9 @@ import { TILES, type Tile } from "@/game/tiles";
 import { getAvatar, type ElementId } from "@/game/avatars";
 import { loadMcqBank, getMcqForPrinciple, type MCQ } from "@/game/mcqService";
 import Board3D from "@/components/board3d/Board3D";
+import { useAudioBridge, useFootstepAudio } from "@/hooks/useAudioBridge";
+import { usePrefersReducedMotion } from "@/hooks/useMediaPrefs";
+import { audio } from "@/lib/audio";
 
 export const Route = createFileRoute("/game")({
   head: () => ({
