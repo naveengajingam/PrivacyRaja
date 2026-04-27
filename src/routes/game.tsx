@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SceneShell } from "@/components/SceneShell";
 import { useGameStore } from "@/store/useGameStore";
 import { TILES, type Tile } from "@/game/tiles";
-import { getTilePosition } from "@/game/boardLayout";
-import { getAvatar } from "@/game/avatars";
+import { getAvatar, type ElementId } from "@/game/avatars";
 import { loadMcqBank, getMcqForPrinciple, type MCQ } from "@/game/mcqService";
+import Board3D from "@/components/board3d/Board3D";
 
 export const Route = createFileRoute("/game")({
   head: () => ({
