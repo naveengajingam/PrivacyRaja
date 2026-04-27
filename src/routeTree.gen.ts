@@ -15,6 +15,8 @@ import { Route as ModeSelectRouteImport } from './routes/mode-select'
 import { Route as GameRouteImport } from './routes/game'
 import { Route as AvatarSelectRouteImport } from './routes/avatar-select'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LobbyCodeRouteImport } from './routes/lobby.$code'
+import { Route as JoinCodeRouteImport } from './routes/join.$code'
 
 const ResultRoute = ResultRouteImport.update({
   id: '/result',
@@ -46,6 +48,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LobbyCodeRoute = LobbyCodeRouteImport.update({
+  id: '/lobby/$code',
+  path: '/lobby/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinCodeRoute = JoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +66,8 @@ export interface FileRoutesByFullPath {
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
+  '/join/$code': typeof JoinCodeRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +76,8 @@ export interface FileRoutesByTo {
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
+  '/join/$code': typeof JoinCodeRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +87,8 @@ export interface FileRoutesById {
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
+  '/join/$code': typeof JoinCodeRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +99,8 @@ export interface FileRouteTypes {
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
+    | '/join/$code'
+    | '/lobby/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +109,8 @@ export interface FileRouteTypes {
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
+    | '/join/$code'
+    | '/lobby/$code'
   id:
     | '__root__'
     | '/'
@@ -97,6 +119,8 @@ export interface FileRouteTypes {
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
+    | '/join/$code'
+    | '/lobby/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +130,8 @@ export interface RootRouteChildren {
   ModeSelectRoute: typeof ModeSelectRoute
   MultiplayerSetupRoute: typeof MultiplayerSetupRoute
   ResultRoute: typeof ResultRoute
+  JoinCodeRoute: typeof JoinCodeRoute
+  LobbyCodeRoute: typeof LobbyCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +178,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lobby/$code': {
+      id: '/lobby/$code'
+      path: '/lobby/$code'
+      fullPath: '/lobby/$code'
+      preLoaderRoute: typeof LobbyCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join/$code': {
+      id: '/join/$code'
+      path: '/join/$code'
+      fullPath: '/join/$code'
+      preLoaderRoute: typeof JoinCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,16 +202,9 @@ const rootRouteChildren: RootRouteChildren = {
   ModeSelectRoute: ModeSelectRoute,
   MultiplayerSetupRoute: MultiplayerSetupRoute,
   ResultRoute: ResultRoute,
+  JoinCodeRoute: JoinCodeRoute,
+  LobbyCodeRoute: LobbyCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
