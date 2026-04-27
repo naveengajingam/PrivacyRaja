@@ -14,7 +14,221 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      game_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          player_id: string | null
+          room_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          player_id?: string | null
+          room_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          player_id?: string | null
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_events_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcq_bank: {
+        Row: {
+          correct_index: number
+          difficulty: string
+          domain: string
+          id: string
+          options: Json
+          principle: string
+          question: string
+        }
+        Insert: {
+          correct_index: number
+          difficulty: string
+          domain?: string
+          id: string
+          options: Json
+          principle: string
+          question: string
+        }
+        Update: {
+          correct_index?: number
+          difficulty?: string
+          domain?: string
+          id?: string
+          options?: Json
+          principle?: string
+          question?: string
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          avatar: string | null
+          cash: number
+          display_name: string
+          id: string
+          in_jail: boolean
+          is_bankrupt: boolean
+          jail_turns: number
+          joined_at: string
+          mcq_skip_tokens: number
+          mcqs_correct: number
+          mcqs_total: number
+          position: number
+          ready: boolean
+          room_id: string
+          seat_index: number
+          user_id: string
+        }
+        Insert: {
+          avatar?: string | null
+          cash?: number
+          display_name: string
+          id?: string
+          in_jail?: boolean
+          is_bankrupt?: boolean
+          jail_turns?: number
+          joined_at?: string
+          mcq_skip_tokens?: number
+          mcqs_correct?: number
+          mcqs_total?: number
+          position?: number
+          ready?: boolean
+          room_id: string
+          seat_index?: number
+          user_id: string
+        }
+        Update: {
+          avatar?: string | null
+          cash?: number
+          display_name?: string
+          id?: string
+          in_jail?: boolean
+          is_bankrupt?: boolean
+          jail_turns?: number
+          joined_at?: string
+          mcq_skip_tokens?: number
+          mcqs_correct?: number
+          mcqs_total?: number
+          position?: number
+          ready?: boolean
+          room_id?: string
+          seat_index?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          code: string
+          created_at: string
+          current_player_index: number
+          host_id: string
+          id: string
+          max_players: number
+          question_domain: string
+          round: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_player_index?: number
+          host_id: string
+          id?: string
+          max_players?: number
+          question_domain?: string
+          round?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_player_index?: number
+          host_id?: string
+          id?: string
+          max_players?: number
+          question_domain?: string
+          round?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tiles_state: {
+        Row: {
+          id: string
+          layers: number
+          owner_id: string | null
+          room_id: string
+          tile_index: number
+        }
+        Insert: {
+          id?: string
+          layers?: number
+          owner_id?: string | null
+          room_id: string
+          tile_index: number
+        }
+        Update: {
+          id?: string
+          layers?: number
+          owner_id?: string | null
+          room_id?: string
+          tile_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiles_state_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiles_state_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
