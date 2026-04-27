@@ -1,4 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { ensureAnonSession } from "@/lib/online";
 
 import appCss from "../styles.css?url";
 
@@ -62,5 +64,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    ensureAnonSession().catch((e) => console.warn("anon auth", e));
+  }, []);
   return <Outlet />;
 }

@@ -12,10 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResultRouteImport } from './routes/result'
 import { Route as MultiplayerSetupRouteImport } from './routes/multiplayer-setup'
 import { Route as ModeSelectRouteImport } from './routes/mode-select'
-import { Route as LobbyRouteImport } from './routes/lobby'
 import { Route as GameRouteImport } from './routes/game'
 import { Route as AvatarSelectRouteImport } from './routes/avatar-select'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LobbyCodeRouteImport } from './routes/lobby.$code'
+import { Route as JoinCodeRouteImport } from './routes/join.$code'
 
 const ResultRoute = ResultRouteImport.update({
   id: '/result',
@@ -30,11 +31,6 @@ const MultiplayerSetupRoute = MultiplayerSetupRouteImport.update({
 const ModeSelectRoute = ModeSelectRouteImport.update({
   id: '/mode-select',
   path: '/mode-select',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LobbyRoute = LobbyRouteImport.update({
-  id: '/lobby',
-  path: '/lobby',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GameRoute = GameRouteImport.update({
@@ -52,34 +48,47 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LobbyCodeRoute = LobbyCodeRouteImport.update({
+  id: '/lobby/$code',
+  path: '/lobby/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinCodeRoute = JoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/avatar-select': typeof AvatarSelectRoute
   '/game': typeof GameRoute
-  '/lobby': typeof LobbyRoute
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
+  '/join/$code': typeof JoinCodeRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/avatar-select': typeof AvatarSelectRoute
   '/game': typeof GameRoute
-  '/lobby': typeof LobbyRoute
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
+  '/join/$code': typeof JoinCodeRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/avatar-select': typeof AvatarSelectRoute
   '/game': typeof GameRoute
-  '/lobby': typeof LobbyRoute
   '/mode-select': typeof ModeSelectRoute
   '/multiplayer-setup': typeof MultiplayerSetupRoute
   '/result': typeof ResultRoute
+  '/join/$code': typeof JoinCodeRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,38 +96,42 @@ export interface FileRouteTypes {
     | '/'
     | '/avatar-select'
     | '/game'
-    | '/lobby'
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
+    | '/join/$code'
+    | '/lobby/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/avatar-select'
     | '/game'
-    | '/lobby'
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
+    | '/join/$code'
+    | '/lobby/$code'
   id:
     | '__root__'
     | '/'
     | '/avatar-select'
     | '/game'
-    | '/lobby'
     | '/mode-select'
     | '/multiplayer-setup'
     | '/result'
+    | '/join/$code'
+    | '/lobby/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AvatarSelectRoute: typeof AvatarSelectRoute
   GameRoute: typeof GameRoute
-  LobbyRoute: typeof LobbyRoute
   ModeSelectRoute: typeof ModeSelectRoute
   MultiplayerSetupRoute: typeof MultiplayerSetupRoute
   ResultRoute: typeof ResultRoute
+  JoinCodeRoute: typeof JoinCodeRoute
+  LobbyCodeRoute: typeof LobbyCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -144,13 +157,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModeSelectRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lobby': {
-      id: '/lobby'
-      path: '/lobby'
-      fullPath: '/lobby'
-      preLoaderRoute: typeof LobbyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/game': {
       id: '/game'
       path: '/game'
@@ -172,6 +178,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lobby/$code': {
+      id: '/lobby/$code'
+      path: '/lobby/$code'
+      fullPath: '/lobby/$code'
+      preLoaderRoute: typeof LobbyCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join/$code': {
+      id: '/join/$code'
+      path: '/join/$code'
+      fullPath: '/join/$code'
+      preLoaderRoute: typeof JoinCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -179,10 +199,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AvatarSelectRoute: AvatarSelectRoute,
   GameRoute: GameRoute,
-  LobbyRoute: LobbyRoute,
   ModeSelectRoute: ModeSelectRoute,
   MultiplayerSetupRoute: MultiplayerSetupRoute,
   ResultRoute: ResultRoute,
+  JoinCodeRoute: JoinCodeRoute,
+  LobbyCodeRoute: LobbyCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
