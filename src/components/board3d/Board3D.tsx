@@ -410,18 +410,18 @@ function TileMesh({
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} />
         </mesh>
       )}
-      {/* tile label */}
+      {/* tile label — use navy on white tiles for contrast; gold elsewhere */}
       <Text
         position={[0, 0.12, 0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={isCorner ? 0.14 : 0.095}
-        color={COLOR_GOLD}
+        color={tile.colorGroup === "white" ? COLOR_CORNER : COLOR_GOLD}
         anchorX="center"
         anchorY="middle"
         maxWidth={w - 0.15}
         textAlign="center"
         outlineWidth={0.005}
-        outlineColor="#0a0a1e"
+        outlineColor={tile.colorGroup === "white" ? "#FFFFFF" : "#0a0a1e"}
       >
         {tile.name}
       </Text>
