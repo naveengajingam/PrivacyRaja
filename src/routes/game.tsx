@@ -349,54 +349,66 @@ function BoardArea({ bank }: { bank: MCQ[] | null }) {
     return map;
   }, [players, animatingPos]);
 
+  // Build ownerColors map for 3D board
+  const ownerColors = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const p of players) {
+      const av = getAvatar(p.avatar);
+      if (av) m[p.id] = av.color;
+    }
+    return m;
+  }, [players]);
+
+  const activeElement: ElementId | null = (players[idx]?.avatar ?? null) as ElementId | null;
+  const highlightTile = phase === "resolving" || phase === "mcq" || phase === "buying" || phase === "building" || phase === "card" || phase === "tax"
+    ? players[idx]?.position ?? null
+    : null;
+
+  // 'positions' map for Board3D (displayed tile per player)
+  const displayedPositions = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const p of players) m[p.id] = animatingPos[p.id] ?? p.position;
+    return m;
+  }, [players, animatingPos]);
+
   return (
     <div className="relative flex flex-1 items-center justify-center">
       <div
-        className="relative aspect-square w-full max-w-[min(78vh,720px)] rounded-3xl border-2 border-[var(--gold)]/40 p-2 shadow-[0_30px_80px_-20px_oklch(0_0_0_/_0.7)]"
+        className="relative aspect-square w-full max-w-[min(78vh,720px)] overflow-hidden rounded-3xl border-2 border-[var(--gold)]/40 shadow-[0_30px_80px_-20px_oklch(0_0_0_/_0.7)]"
         style={{
           background:
-            "radial-gradient(circle at center, oklch(0.18 0.07 285) 0%, oklch(0.1 0.03 285) 100%)",
+            "radial-gradient(circle at center, oklch(0.18 0.07 285) 0%, oklch(0.06 0.02 285) 100%)",
         }}
       >
-        <div
-          className="grid h-full w-full gap-[2px]"
-          style={{
-            gridTemplateColumns: "repeat(11, 1fr)",
-            gridTemplateRows: "repeat(11, 1fr)",
-          }}
-        >
-          {TILES.map((t) => {
-            const pos = getTilePosition(t.index);
-            const ts = tileStates.find((s) => s.tileIndex === t.index);
-            const owner = ts?.ownerId ? players.find((p) => p.id === ts.ownerId) : null;
-            const occupants = playersByTile[t.index] ?? [];
-            return (
-              <BoardTile
-                key={t.index}
-                tile={t}
-                row={pos.row}
-                col={pos.col}
-                ownerColor={owner ? getAvatar(owner.avatar)?.color ?? null : null}
-                layers={ts?.layers ?? 0}
-                occupants={occupants.length}
-                occupantsList={occupants}
-              />
-            );
-          })}
+        <Board3D
+          players={players.map((p) => ({ id: p.id, avatar: p.avatar, isBankrupt: p.isBankrupt }))}
+          tileStates={tileStates}
+          positions={displayedPositions}
+          highlightTile={highlightTile}
+          ownerColors={ownerColors}
+          diceValue={dice.value}
+          isRolling={dice.isRolling}
+          onRollDice={rollDice}
+          canRoll={phase === "rolling"}
+          activeElement={activeElement}
+        />
 
-          {/* Center area for dice */}
-          <div
-            className="flex flex-col items-center justify-center"
-            style={{ gridColumn: "3 / span 7", gridRow: "3 / span 7" }}
-          >
-            <DiceCenter
-              value={dice.value}
-              isRolling={dice.isRolling}
-              canRoll={phase === "rolling"}
-              onRoll={rollDice}
-              phaseLabel={phase}
-            />
+        {/* Phase indicator + fallback roll button (bottom-center overlay) */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-2">
+          <div className="pointer-events-auto rounded-full border border-[var(--gold)]/30 bg-[oklch(0.1_0.03_285_/_0.85)] px-4 py-1.5 backdrop-blur-md">
+            <span className="font-body text-[9px] uppercase tracking-[0.4em] text-[var(--gold-soft)]/70 mr-2">Phase</span>
+            <span className="font-display text-sm text-[var(--gold)]">{phase}</span>
           </div>
+          {phase === "rolling" && (
+            <button
+              onClick={rollDice}
+              disabled={dice.isRolling}
+              className="pointer-events-auto rounded-full px-6 py-2 font-display text-sm tracking-widest text-[oklch(0.13_0.04_285)] shadow-[0_0_24px_rgba(255,153,51,0.6)] disabled:opacity-60"
+              style={{ background: "linear-gradient(180deg, #FFE9A8 0%, #D4A017 60%, #8a6510 100%)" }}
+            >
+              {dice.isRolling ? "Rolling…" : "⚡ Tap Fire-Die"}
+            </button>
+          )}
         </div>
       </div>
     </div>
