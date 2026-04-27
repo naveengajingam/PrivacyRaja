@@ -81,14 +81,17 @@ export interface Board3DProps {
   canRoll: boolean;
   /** Element id of the currently active player (for per-element tile FX on move). */
   activeElement: ElementId | null;
+  /** Respect prefers-reduced-motion — disables bloom, dice tumble scale, etc. */
+  reducedMotion?: boolean;
 }
 
 // ========= Board3D root =========
 export default function Board3D(props: Board3DProps) {
+  const reduced = !!props.reducedMotion;
   return (
     <div className="relative h-full w-full">
       <Canvas
-        shadows={!IS_MOBILE}
+        shadows={!IS_MOBILE && !reduced}
         dpr={[1, 2]}
         camera={{ position: [0, 12, 12], fov: 45 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
@@ -100,15 +103,17 @@ export default function Board3D(props: Board3DProps) {
           <SceneContents {...props} />
         </Suspense>
 
-        <EffectComposer>
-          <Bloom
-            intensity={0.9}
-            luminanceThreshold={0.55}
-            luminanceSmoothing={0.3}
-            mipmapBlur
-          />
-          <Vignette eskil={false} offset={0.2} darkness={0.75} />
-        </EffectComposer>
+        {!reduced && (
+          <EffectComposer>
+            <Bloom
+              intensity={0.9}
+              luminanceThreshold={0.55}
+              luminanceSmoothing={0.3}
+              mipmapBlur
+            />
+            <Vignette eskil={false} offset={0.2} darkness={0.75} />
+          </EffectComposer>
+        )}
 
         <IdleOrbit />
       </Canvas>
