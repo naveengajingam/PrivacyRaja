@@ -81,14 +81,17 @@ export interface Board3DProps {
   canRoll: boolean;
   /** Element id of the currently active player (for per-element tile FX on move). */
   activeElement: ElementId | null;
+  /** Respect prefers-reduced-motion — disables bloom, dice tumble scale, etc. */
+  reducedMotion?: boolean;
 }
 
 // ========= Board3D root =========
 export default function Board3D(props: Board3DProps) {
+  const reduced = !!props.reducedMotion;
   return (
     <div className="relative h-full w-full">
       <Canvas
-        shadows={!IS_MOBILE}
+        shadows={!IS_MOBILE && !reduced}
         dpr={[1, 2]}
         camera={{ position: [0, 12, 12], fov: 45 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
@@ -100,15 +103,17 @@ export default function Board3D(props: Board3DProps) {
           <SceneContents {...props} />
         </Suspense>
 
-        <EffectComposer>
-          <Bloom
-            intensity={0.9}
-            luminanceThreshold={0.55}
-            luminanceSmoothing={0.3}
-            mipmapBlur
-          />
-          <Vignette eskil={false} offset={0.2} darkness={0.75} />
-        </EffectComposer>
+        {!reduced && (
+          <EffectComposer>
+            <Bloom
+              intensity={0.9}
+              luminanceThreshold={0.55}
+              luminanceSmoothing={0.3}
+              mipmapBlur
+            />
+            <Vignette eskil={false} offset={0.2} darkness={0.75} />
+          </EffectComposer>
+        )}
 
         <IdleOrbit />
       </Canvas>
@@ -128,11 +133,15 @@ function IdleOrbit() {
   return (
     <OrbitControls
       ref={controlsRef}
+      makeDefault
       minPolarAngle={0.3}
       maxPolarAngle={1.2}
       enablePan={false}
-      minDistance={10}
-      maxDistance={22}
+      enableZoom
+      zoomSpeed={0.9}
+      rotateSpeed={0.8}
+      minDistance={IS_MOBILE ? 8 : 10}
+      maxDistance={IS_MOBILE ? 28 : 22}
       autoRotate={false}
       onStart={() => { idleSignal.lastInteract = performance.now(); }}
       onChange={() => { idleSignal.lastInteract = performance.now(); }}
@@ -401,18 +410,18 @@ function TileMesh({
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} />
         </mesh>
       )}
-      {/* tile label */}
+      {/* tile label — use navy on white tiles for contrast; gold elsewhere */}
       <Text
         position={[0, 0.12, 0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={isCorner ? 0.14 : 0.095}
-        color={COLOR_GOLD}
+        color={tile.colorGroup === "white" ? COLOR_CORNER : COLOR_GOLD}
         anchorX="center"
         anchorY="middle"
         maxWidth={w - 0.15}
         textAlign="center"
         outlineWidth={0.005}
-        outlineColor="#0a0a1e"
+        outlineColor={tile.colorGroup === "white" ? "#FFFFFF" : "#0a0a1e"}
       >
         {tile.name}
       </Text>

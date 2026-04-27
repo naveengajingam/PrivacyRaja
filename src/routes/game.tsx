@@ -7,6 +7,9 @@ import { TILES, type Tile } from "@/game/tiles";
 import { getAvatar, type ElementId } from "@/game/avatars";
 import { loadMcqBank, getMcqForPrinciple, type MCQ } from "@/game/mcqService";
 import Board3D from "@/components/board3d/Board3D";
+import { useAudioBridge, useFootstepAudio } from "@/hooks/useAudioBridge";
+import { usePrefersReducedMotion } from "@/hooks/useMediaPrefs";
+import { audio } from "@/lib/audio";
 
 export const Route = createFileRoute("/game")({
   head: () => ({
@@ -27,6 +30,9 @@ function GameScreen() {
   const players = useGameStore((s) => s.players);
   const setupPlayers = useGameStore((s) => s.setupPlayers);
   const winnerId = useGameStore((s) => s.winnerId);
+
+  // Wire audio: ambient loop + SFX on phase/state transitions
+  useAudioBridge();
 
   // Safety: if user lands on /game without setup, push them to avatar select
   useEffect(() => {
