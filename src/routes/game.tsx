@@ -28,6 +28,10 @@ function GameScreen() {
   const setupPlayers = useGameStore((s) => s.setupPlayers);
   const winnerId = useGameStore((s) => s.winnerId);
 
+  // Wire audio: ambient loop + SFX on phase/state transitions
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require("@/hooks/useAudioBridge").useAudioBridge();
+
   // Safety: if user lands on /game without setup, push them to avatar select
   useEffect(() => {
     if (players.length === 0) {
