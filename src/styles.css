@@ -4,8 +4,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Devanagari-inspired display + refined body fonts */
-@import url("https://fonts.googleapis.com/css2?family=Yatra+One&family=Cormorant+Garamond:wght@400;500;600;700&family=Hind:wght@300;400;500;600;700&display=swap");
+/* Neon-noir display + techno body fonts */
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap");
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -34,61 +34,63 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Privacy Raja palette */
-  --color-saffron: var(--saffron);
-  --color-flag-white: var(--flag-white);
-  --color-india-green: var(--india-green);
-  --color-navy-deep: var(--navy-deep);
-  --color-gold: var(--gold);
-  --color-gold-soft: var(--gold-soft);
-  --color-violet-chance: var(--violet-chance);
-  --color-ember: var(--ember);
+  /* Data Compliance Quest neon palette
+     (token names preserved from previous theme so existing classes keep working,
+     but values are now neon cyberpunk.) */
+  --color-saffron: var(--saffron);          /* -> neon magenta/red */
+  --color-flag-white: var(--flag-white);    /* -> neon cyan */
+  --color-india-green: var(--india-green);  /* -> neon green */
+  --color-navy-deep: var(--navy-deep);      /* -> deep space black */
+  --color-gold: var(--gold);                /* -> primary neon cyan */
+  --color-gold-soft: var(--gold-soft);      /* -> pale cyan */
+  --color-violet-chance: var(--violet-chance); /* -> neon magenta */
+  --color-ember: var(--ember);              /* -> electric yellow */
 
-  --font-display: "Yatra One", "Cormorant Garamond", serif;
-  --font-serif: "Cormorant Garamond", serif;
-  --font-body: "Hind", system-ui, sans-serif;
+  --font-display: "Orbitron", "Rajdhani", sans-serif;
+  --font-serif: "Rajdhani", sans-serif;
+  --font-body: "Rajdhani", system-ui, sans-serif;
+  --font-mono: "Share Tech Mono", ui-monospace, monospace;
 }
 
 :root {
   --radius: 0.625rem;
 
-  /* Tri-colour (exact spec) */
-  --saffron: oklch(0.748 0.171 55);   /* #FF9933 */
-  --flag-white: oklch(1 0 0);          /* #FFFFFF */
-  --india-green: oklch(0.5 0.16 145);  /* #138808 */
+  /* === Neon signal colors === */
+  --saffron: oklch(0.68 0.28 12);        /* #FF2D6F hot pink/red */
+  --flag-white: oklch(0.92 0.16 200);    /* neon cyan */
+  --india-green: oklch(0.82 0.27 145);   /* #39FF88 neon green */
 
-  /* Accents */
-  --navy-deep: oklch(0.22 0.08 285);   /* #1A1A4E */
-  --gold: oklch(0.74 0.13 80);         /* #D4A017 */
-  --gold-soft: oklch(0.85 0.1 85);
-  --violet-chance: oklch(0.38 0.18 295);
-  --ember: oklch(0.78 0.18 50);
+  --navy-deep: oklch(0.07 0.03 260);     /* deep black-blue */
+  --gold: oklch(0.85 0.18 205);          /* primary neon cyan #00E5FF */
+  --gold-soft: oklch(0.92 0.1 210);
+  --violet-chance: oklch(0.62 0.3 315);  /* neon magenta */
+  --ember: oklch(0.9 0.19 95);           /* electric yellow */
 
-  /* Game-themed dark base */
-  --background: oklch(0.13 0.04 285);
-  --foreground: oklch(0.96 0.02 80);
-  --card: oklch(0.18 0.05 285);
-  --card-foreground: oklch(0.96 0.02 80);
-  --popover: oklch(0.18 0.05 285);
-  --popover-foreground: oklch(0.96 0.02 80);
+  /* Dark circuit base */
+  --background: oklch(0.06 0.02 260);
+  --foreground: oklch(0.96 0.04 210);
+  --card: oklch(0.1 0.04 265);
+  --card-foreground: oklch(0.96 0.04 210);
+  --popover: oklch(0.09 0.04 265);
+  --popover-foreground: oklch(0.96 0.04 210);
   --primary: var(--gold);
-  --primary-foreground: oklch(0.13 0.04 285);
-  --secondary: oklch(0.25 0.06 285);
-  --secondary-foreground: oklch(0.96 0.02 80);
-  --muted: oklch(0.22 0.05 285);
-  --muted-foreground: oklch(0.72 0.04 80);
-  --accent: var(--saffron);
-  --accent-foreground: oklch(0.13 0.04 285);
-  --destructive: oklch(0.6 0.22 27);
+  --primary-foreground: oklch(0.07 0.03 260);
+  --secondary: oklch(0.14 0.06 280);
+  --secondary-foreground: oklch(0.96 0.04 210);
+  --muted: oklch(0.12 0.05 275);
+  --muted-foreground: oklch(0.78 0.07 210);
+  --accent: var(--violet-chance);
+  --accent-foreground: oklch(0.07 0.03 260);
+  --destructive: oklch(0.66 0.28 20);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.74 0.13 80 / 0.25);
-  --input: oklch(0.74 0.13 80 / 0.3);
+  --border: oklch(0.85 0.18 205 / 0.3);
+  --input: oklch(0.85 0.18 205 / 0.35);
   --ring: var(--gold);
 }
 
 .dark {
-  --background: oklch(0.13 0.04 285);
-  --foreground: oklch(0.96 0.02 80);
+  --background: oklch(0.06 0.02 260);
+  --foreground: oklch(0.96 0.04 210);
 }
 
 @layer base {
@@ -99,67 +101,100 @@
     color: var(--color-foreground);
     font-family: var(--font-body);
     background-image:
-      radial-gradient(ellipse at top, oklch(0.22 0.09 285) 0%, transparent 55%),
-      radial-gradient(ellipse at bottom, oklch(0.18 0.07 25 / 0.6) 0%, transparent 60%),
-      linear-gradient(180deg, oklch(0.1 0.03 285), oklch(0.08 0.02 285));
+      radial-gradient(ellipse at 20% 15%, oklch(0.62 0.3 315 / 0.22) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 85%, oklch(0.85 0.18 205 / 0.18) 0%, transparent 55%),
+      linear-gradient(180deg, oklch(0.07 0.03 260), oklch(0.04 0.02 260));
     background-attachment: fixed;
     overflow-x: hidden;
   }
-  h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.02em; }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
 }
 
-/* === Privacy Raja utility layer === */
+/* === Neon utility layer (same class names as before, new look) === */
 @layer utilities {
+  /* Neon cyan/magenta gradient text with glow */
   .text-gold-glow {
-    background: linear-gradient(180deg, #FFE9A8 0%, #D4A017 50%, #8a6510 100%);
+    background: linear-gradient(180deg, #7af8ff 0%, #00e5ff 45%, #ff2d6f 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     text-shadow:
-      0 0 24px oklch(0.74 0.13 80 / 0.55),
-      0 2px 0 oklch(0 0 0 / 0.6);
-    filter: drop-shadow(0 0 8px oklch(0.78 0.18 50 / 0.4));
+      0 0 18px oklch(0.85 0.18 205 / 0.8),
+      0 0 36px oklch(0.62 0.3 315 / 0.35);
+    filter: drop-shadow(0 0 10px oklch(0.85 0.18 205 / 0.5));
   }
 
+  /* Neon holographic panel border (was filigree) */
   .filigree-border {
-    border: 1px solid oklch(0.74 0.13 80 / 0.55);
+    border: 1px solid oklch(0.85 0.18 205 / 0.55);
     box-shadow:
-      inset 0 0 0 1px oklch(0.74 0.13 80 / 0.18),
-      inset 0 0 24px oklch(0.74 0.13 80 / 0.08),
-      0 0 32px oklch(0.74 0.13 80 / 0.18),
-      0 12px 40px oklch(0 0 0 / 0.6);
+      inset 0 0 0 1px oklch(0.85 0.18 205 / 0.18),
+      inset 0 0 28px oklch(0.62 0.3 315 / 0.08),
+      0 0 24px oklch(0.85 0.18 205 / 0.28),
+      0 0 60px oklch(0.62 0.3 315 / 0.18),
+      0 20px 60px oklch(0 0 0 / 0.75);
   }
 
+  /* Neon tri-accent border (cyan / magenta / yellow) */
   .tricolour-border {
     background:
       linear-gradient(var(--card), var(--card)) padding-box,
-      linear-gradient(135deg, #FF9933 0%, #FFFFFF 50%, #138808 100%) border-box;
+      linear-gradient(135deg, #00e5ff 0%, #ff2d6f 50%, #ffee00 100%) border-box;
     border: 2px solid transparent;
   }
 
   .tricolour-glow {
     box-shadow:
-      0 0 0 1px oklch(0.74 0.13 80 / 0.4),
-      0 0 24px -4px #FF9933,
-      0 0 48px -8px #138808,
-      0 20px 60px -10px oklch(0 0 0 / 0.7);
+      0 0 0 1px oklch(0.85 0.18 205 / 0.5),
+      0 0 24px -4px #00e5ff,
+      0 0 48px -8px #ff2d6f,
+      0 20px 60px -10px oklch(0 0 0 / 0.8);
   }
 
+  /* Electric text glow (was ember) */
   .ember-text {
-    text-shadow: 0 0 12px oklch(0.78 0.18 50 / 0.7);
+    text-shadow:
+      0 0 10px oklch(0.9 0.19 95 / 0.8),
+      0 0 22px oklch(0.68 0.28 12 / 0.5);
+  }
+
+  /* Scanline overlay */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      oklch(0.85 0.18 205 / 0.04) 3px,
+      transparent 4px
+    );
+    mix-blend-mode: overlay;
+  }
+
+  /* Faint hex/circuit grid background */
+  .circuit-grid {
+    background-image:
+      linear-gradient(oklch(0.85 0.18 205 / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.85 0.18 205 / 0.08) 1px, transparent 1px);
+    background-size: 48px 48px;
   }
 }
 
-/* Mughal arch shape (used as clip-path on frame top) */
-.mughal-arch-top {
-  clip-path: path("M 0 60 C 0 20, 30 0, 50 0 C 70 0, 100 20, 100 60 L 100 100 L 0 100 Z");
-}
+/* Legacy class kept as no-op so older markup doesn't break */
+.mughal-arch-top { clip-path: none; }
 
-/* Animations */
+/* === Animations === */
 @keyframes ember-rise {
   0%   { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
-  10%  { opacity: 0.9; }
-  100% { transform: translate3d(var(--dx, 20px), -110vh, 0) scale(0.4); opacity: 0; }
+  10%  { opacity: 0.95; }
+  100% { transform: translate3d(var(--dx, 20px), -110vh, 0) scale(0.3); opacity: 0; }
 }
 .animate-ember { animation: ember-rise linear infinite; }
 
@@ -167,10 +202,34 @@
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
-.animate-chakra-spin { animation: chakra-spin 28s linear infinite; }
+.animate-chakra-spin { animation: chakra-spin 40s linear infinite; }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.78 0.18 50 / 0.6), 0 0 24px oklch(0.74 0.13 80 / 0.4); }
-  50%      { box-shadow: 0 0 0 14px oklch(0.78 0.18 50 / 0), 0 0 40px oklch(0.74 0.13 80 / 0.7); }
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 oklch(0.62 0.3 315 / 0.6),
+      0 0 28px oklch(0.85 0.18 205 / 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 14px oklch(0.62 0.3 315 / 0),
+      0 0 48px oklch(0.85 0.18 205 / 0.85);
+  }
 }
 .animate-pulse-glow { animation: pulse-glow 2.2s ease-in-out infinite; }
+
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 0.92; }
+  47% { opacity: 0.6; }
+  49% { opacity: 1; }
+  92% { opacity: 0.85; }
+  94% { opacity: 1; }
+}
+.animate-flicker { animation: neon-flicker 6s infinite; }
+
+@keyframes grid-pan {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 48px 48px, 48px 48px; }
+}
+.animate-grid-pan { animation: grid-pan 12s linear infinite; }

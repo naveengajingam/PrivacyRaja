@@ -14,16 +14,17 @@ import {
   occupantOffset,
 } from "./layout3d";
 
-// ========= palette =========
-const COLOR_SAFFRON = "#FF9933";
-const COLOR_WHITE = "#FFFFFF";
-const COLOR_GREEN = "#138808";
-const COLOR_CORNER = "#1A1A4E";
-const COLOR_CHANCE = "#3d1a6e";
-const COLOR_COMMUNITY = "#2d2a6e";
-const COLOR_TAX = "#3a2a2a";
-const COLOR_UTILITY = "#efe3c2";
-const COLOR_GOLD = "#D4A017";
+// ========= Data Compliance Quest neon palette =========
+// Names kept stable for backwards compatibility with the rest of the file.
+const COLOR_SAFFRON = "#FF2D6F"; // hot-pink/magenta principle group
+const COLOR_WHITE = "#00E5FF";   // primary neon cyan (was white) — principle group
+const COLOR_GREEN = "#39FF88";   // neon green principle group
+const COLOR_CORNER = "#0A0A1E";  // deep space black corners
+const COLOR_CHANCE = "#B967FF";  // neon violet — chance
+const COLOR_COMMUNITY = "#FFEE00"; // electric yellow — community
+const COLOR_TAX = "#FF3B3B";     // signal red — penalty/tax
+const COLOR_UTILITY = "#7AF8FF"; // ice cyan — utility
+const COLOR_GOLD = "#00E5FF";    // primary accent (neon cyan)
 
 function tileColor(t: Tile): string {
   if (t.type === "principle") {
@@ -96,8 +97,8 @@ export default function Board3D(props: Board3DProps) {
         camera={{ position: [0, 12, 12], fov: 45 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
-        <color attach="background" args={["#0a0a1e"]} />
-        <fog attach="fog" args={["#0a0a1e", 15, 35]} />
+        <color attach="background" args={["#04040f"]} />
+        <fog attach="fog" args={["#05051a", 14, 38]} />
 
         <Suspense fallback={null}>
           <SceneContents {...props} />
@@ -106,12 +107,12 @@ export default function Board3D(props: Board3DProps) {
         {!reduced && (
           <EffectComposer>
             <Bloom
-              intensity={0.9}
-              luminanceThreshold={0.55}
-              luminanceSmoothing={0.3}
+              intensity={1.4}
+              luminanceThreshold={0.35}
+              luminanceSmoothing={0.4}
               mipmapBlur
             />
-            <Vignette eskil={false} offset={0.2} darkness={0.75} />
+            <Vignette eskil={false} offset={0.18} darkness={0.85} />
           </EffectComposer>
         )}
 
@@ -153,13 +154,13 @@ function IdleOrbit() {
 function SceneContents(props: Board3DProps) {
   return (
     <>
-      {/* lights */}
-      <hemisphereLight args={["#ffd7a0", "#1a1a3e", 0.55]} />
-      <ambientLight intensity={0.25} color="#ffe3b0" />
+      {/* lights — cool neon wash + magenta rim */}
+      <hemisphereLight args={["#7af8ff", "#0a0420", 0.55]} />
+      <ambientLight intensity={0.3} color="#b8f4ff" />
       <directionalLight
         position={[6, 12, 6]}
-        intensity={1.15}
-        color="#fff1c8"
+        intensity={1.0}
+        color="#ccf7ff"
         castShadow={!IS_MOBILE}
         shadow-mapSize-width={IS_MOBILE ? 512 : 1024}
         shadow-mapSize-height={IS_MOBILE ? 512 : 1024}
@@ -168,7 +169,9 @@ function SceneContents(props: Board3DProps) {
         shadow-camera-top={10}
         shadow-camera-bottom={-10}
       />
-      <pointLight position={[0, 4, 0]} intensity={0.6} color={COLOR_GOLD} distance={14} />
+      <pointLight position={[0, 4, 0]} intensity={0.9} color={COLOR_GOLD} distance={16} />
+      <pointLight position={[-6, 3, -6]} intensity={0.7} color="#FF2D6F" distance={14} />
+      <pointLight position={[6, 3, 6]} intensity={0.7} color="#B967FF" distance={14} />
 
       {/* ground shadow catcher */}
       <ContactShadows
@@ -248,9 +251,11 @@ function Platform() {
         position={[0, 0, 0]}
       >
         <meshStandardMaterial
-          color="#141432"
-          metalness={0.35}
-          roughness={0.6}
+          color="#0a0a1e"
+          metalness={0.6}
+          roughness={0.35}
+          emissive="#05051a"
+          emissiveIntensity={0.6}
         />
       </RoundedBox>
       {/* Gold inlay ring on platform top */}
@@ -292,7 +297,7 @@ function Chakra() {
           >
             <boxGeometry args={[0.08, 0.02, 2.7]} />
             <meshStandardMaterial
-              color="#1A1A4E"
+              color="#0a0a1e"
               metalness={0.3}
               roughness={0.6}
             />
@@ -303,7 +308,7 @@ function Chakra() {
       <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
         <meshStandardMaterial
-          color="#1A1A4E"
+          color="#0a0a1e"
           emissive={COLOR_GOLD}
           emissiveIntensity={0.4}
         />
@@ -479,12 +484,12 @@ function LayerVisual({ layers }: { layers: number }) {
       {/* base */}
       <mesh position={[0, 0.12, 0]}>
         <boxGeometry args={[0.38, 0.22, 0.38]} />
-        <meshStandardMaterial color="#1A1A4E" metalness={0.5} roughness={0.4} />
+        <meshStandardMaterial color="#0a0a1e" metalness={0.5} roughness={0.4} />
       </mesh>
       {/* mid dome */}
       <mesh position={[0, 0.4, 0]}>
         <sphereGeometry args={[0.22, 24, 16, 0, Math.PI * 2, 0, Math.PI / 1.3]} />
-        <meshStandardMaterial color="#FFE9A8" metalness={0.8} roughness={0.25} />
+        <meshStandardMaterial color="#7af8ff" metalness={0.8} roughness={0.25} />
       </mesh>
       {/* spire */}
       <mesh position={[0, 0.7, 0]}>
@@ -494,7 +499,7 @@ function LayerVisual({ layers }: { layers: number }) {
       {/* glowing top orb */}
       <mesh position={[0, 0.95, 0]}>
         <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#FFE9A8" emissive={COLOR_GOLD} emissiveIntensity={1.5} />
+        <meshStandardMaterial color="#7af8ff" emissive={COLOR_GOLD} emissiveIntensity={1.5} />
       </mesh>
       <pointLight position={[0, 0.95, 0]} intensity={0.8} color={COLOR_GOLD} distance={2} />
     </group>
@@ -514,7 +519,7 @@ function SpinningTrophy() {
       </mesh>
       <mesh position={[0, 0.18, 0]}>
         <sphereGeometry args={[0.07, 16, 16]} />
-        <meshStandardMaterial color="#FFE9A8" emissive={COLOR_GOLD} emissiveIntensity={0.7} />
+        <meshStandardMaterial color="#7af8ff" emissive={COLOR_GOLD} emissiveIntensity={0.7} />
       </mesh>
     </group>
   );
@@ -605,7 +610,7 @@ function Dice({
         <mesh castShadow>
           <boxGeometry args={[1.2, 1.2, 1.2]} />
           <meshStandardMaterial
-            color="#FFE9A8"
+            color="#7af8ff"
             metalness={0.7}
             roughness={0.25}
             emissive={COLOR_GOLD}
@@ -649,7 +654,7 @@ function DicePips() {
           {pipLayout(f.count).map(([px, py], j) => (
             <mesh key={j} position={[px, py, 0]}>
               <circleGeometry args={[0.08, 16]} />
-              <meshStandardMaterial color="#1A1A4E" />
+              <meshStandardMaterial color="#0a0a1e" />
             </mesh>
           ))}
         </group>
@@ -831,7 +836,7 @@ function EtherStar({ angleOffset }: { angleOffset: number }) {
   return (
     <mesh ref={ref}>
       <sphereGeometry args={[0.05, 8, 8]} />
-      <meshStandardMaterial color="#FFE9A8" emissive="#D4A017" emissiveIntensity={1.5} />
+      <meshStandardMaterial color="#7af8ff" emissive="#00E5FF" emissiveIntensity={1.5} />
     </mesh>
   );
 }
