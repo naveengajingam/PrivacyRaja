@@ -14,16 +14,17 @@ import {
   occupantOffset,
 } from "./layout3d";
 
-// ========= palette =========
-const COLOR_SAFFRON = "#FF9933";
-const COLOR_WHITE = "#FFFFFF";
-const COLOR_GREEN = "#138808";
-const COLOR_CORNER = "#1A1A4E";
-const COLOR_CHANCE = "#3d1a6e";
-const COLOR_COMMUNITY = "#2d2a6e";
-const COLOR_TAX = "#3a2a2a";
-const COLOR_UTILITY = "#efe3c2";
-const COLOR_GOLD = "#D4A017";
+// ========= Data Compliance Quest neon palette =========
+// Names kept stable for backwards compatibility with the rest of the file.
+const COLOR_SAFFRON = "#FF2D6F"; // hot-pink/magenta principle group
+const COLOR_WHITE = "#00E5FF";   // primary neon cyan (was white) — principle group
+const COLOR_GREEN = "#39FF88";   // neon green principle group
+const COLOR_CORNER = "#0A0A1E";  // deep space black corners
+const COLOR_CHANCE = "#B967FF";  // neon violet — chance
+const COLOR_COMMUNITY = "#FFEE00"; // electric yellow — community
+const COLOR_TAX = "#FF3B3B";     // signal red — penalty/tax
+const COLOR_UTILITY = "#7AF8FF"; // ice cyan — utility
+const COLOR_GOLD = "#00E5FF";    // primary accent (neon cyan)
 
 function tileColor(t: Tile): string {
   if (t.type === "principle") {
