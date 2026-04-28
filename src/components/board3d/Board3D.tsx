@@ -97,8 +97,8 @@ export default function Board3D(props: Board3DProps) {
         camera={{ position: [0, 12, 12], fov: 45 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
-        <color attach="background" args={["#0a0a1e"]} />
-        <fog attach="fog" args={["#0a0a1e", 15, 35]} />
+        <color attach="background" args={["#04040f"]} />
+        <fog attach="fog" args={["#05051a", 14, 38]} />
 
         <Suspense fallback={null}>
           <SceneContents {...props} />
@@ -107,12 +107,12 @@ export default function Board3D(props: Board3DProps) {
         {!reduced && (
           <EffectComposer>
             <Bloom
-              intensity={0.9}
-              luminanceThreshold={0.55}
-              luminanceSmoothing={0.3}
+              intensity={1.4}
+              luminanceThreshold={0.35}
+              luminanceSmoothing={0.4}
               mipmapBlur
             />
-            <Vignette eskil={false} offset={0.2} darkness={0.75} />
+            <Vignette eskil={false} offset={0.18} darkness={0.85} />
           </EffectComposer>
         )}
 
@@ -154,13 +154,13 @@ function IdleOrbit() {
 function SceneContents(props: Board3DProps) {
   return (
     <>
-      {/* lights */}
-      <hemisphereLight args={["#ffd7a0", "#1a1a3e", 0.55]} />
-      <ambientLight intensity={0.25} color="#ffe3b0" />
+      {/* lights — cool neon wash + magenta rim */}
+      <hemisphereLight args={["#7af8ff", "#0a0420", 0.55]} />
+      <ambientLight intensity={0.3} color="#b8f4ff" />
       <directionalLight
         position={[6, 12, 6]}
-        intensity={1.15}
-        color="#fff1c8"
+        intensity={1.0}
+        color="#ccf7ff"
         castShadow={!IS_MOBILE}
         shadow-mapSize-width={IS_MOBILE ? 512 : 1024}
         shadow-mapSize-height={IS_MOBILE ? 512 : 1024}
@@ -169,7 +169,9 @@ function SceneContents(props: Board3DProps) {
         shadow-camera-top={10}
         shadow-camera-bottom={-10}
       />
-      <pointLight position={[0, 4, 0]} intensity={0.6} color={COLOR_GOLD} distance={14} />
+      <pointLight position={[0, 4, 0]} intensity={0.9} color={COLOR_GOLD} distance={16} />
+      <pointLight position={[-6, 3, -6]} intensity={0.7} color="#FF2D6F" distance={14} />
+      <pointLight position={[6, 3, 6]} intensity={0.7} color="#B967FF" distance={14} />
 
       {/* ground shadow catcher */}
       <ContactShadows
@@ -249,9 +251,11 @@ function Platform() {
         position={[0, 0, 0]}
       >
         <meshStandardMaterial
-          color="#141432"
-          metalness={0.35}
-          roughness={0.6}
+          color="#0a0a1e"
+          metalness={0.6}
+          roughness={0.35}
+          emissive="#05051a"
+          emissiveIntensity={0.6}
         />
       </RoundedBox>
       {/* Gold inlay ring on platform top */}
