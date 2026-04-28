@@ -297,7 +297,7 @@ function Chakra() {
           >
             <boxGeometry args={[0.08, 0.02, 2.7]} />
             <meshStandardMaterial
-              color="#1A1A4E"
+              color="#0a0a1e"
               metalness={0.3}
               roughness={0.6}
             />
@@ -308,7 +308,7 @@ function Chakra() {
       <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
         <meshStandardMaterial
-          color="#1A1A4E"
+          color="#0a0a1e"
           emissive={COLOR_GOLD}
           emissiveIntensity={0.4}
         />
@@ -484,12 +484,12 @@ function LayerVisual({ layers }: { layers: number }) {
       {/* base */}
       <mesh position={[0, 0.12, 0]}>
         <boxGeometry args={[0.38, 0.22, 0.38]} />
-        <meshStandardMaterial color="#1A1A4E" metalness={0.5} roughness={0.4} />
+        <meshStandardMaterial color="#0a0a1e" metalness={0.5} roughness={0.4} />
       </mesh>
       {/* mid dome */}
       <mesh position={[0, 0.4, 0]}>
         <sphereGeometry args={[0.22, 24, 16, 0, Math.PI * 2, 0, Math.PI / 1.3]} />
-        <meshStandardMaterial color="#FFE9A8" metalness={0.8} roughness={0.25} />
+        <meshStandardMaterial color="#7af8ff" metalness={0.8} roughness={0.25} />
       </mesh>
       {/* spire */}
       <mesh position={[0, 0.7, 0]}>
@@ -499,7 +499,7 @@ function LayerVisual({ layers }: { layers: number }) {
       {/* glowing top orb */}
       <mesh position={[0, 0.95, 0]}>
         <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#FFE9A8" emissive={COLOR_GOLD} emissiveIntensity={1.5} />
+        <meshStandardMaterial color="#7af8ff" emissive={COLOR_GOLD} emissiveIntensity={1.5} />
       </mesh>
       <pointLight position={[0, 0.95, 0]} intensity={0.8} color={COLOR_GOLD} distance={2} />
     </group>
@@ -519,7 +519,7 @@ function SpinningTrophy() {
       </mesh>
       <mesh position={[0, 0.18, 0]}>
         <sphereGeometry args={[0.07, 16, 16]} />
-        <meshStandardMaterial color="#FFE9A8" emissive={COLOR_GOLD} emissiveIntensity={0.7} />
+        <meshStandardMaterial color="#7af8ff" emissive={COLOR_GOLD} emissiveIntensity={0.7} />
       </mesh>
     </group>
   );
@@ -610,7 +610,7 @@ function Dice({
         <mesh castShadow>
           <boxGeometry args={[1.2, 1.2, 1.2]} />
           <meshStandardMaterial
-            color="#FFE9A8"
+            color="#7af8ff"
             metalness={0.7}
             roughness={0.25}
             emissive={COLOR_GOLD}
@@ -654,7 +654,7 @@ function DicePips() {
           {pipLayout(f.count).map(([px, py], j) => (
             <mesh key={j} position={[px, py, 0]}>
               <circleGeometry args={[0.08, 16]} />
-              <meshStandardMaterial color="#1A1A4E" />
+              <meshStandardMaterial color="#0a0a1e" />
             </mesh>
           ))}
         </group>
@@ -836,7 +836,7 @@ function EtherStar({ angleOffset }: { angleOffset: number }) {
   return (
     <mesh ref={ref}>
       <sphereGeometry args={[0.05, 8, 8]} />
-      <meshStandardMaterial color="#FFE9A8" emissive="#D4A017" emissiveIntensity={1.5} />
+      <meshStandardMaterial color="#7af8ff" emissive="#00E5FF" emissiveIntensity={1.5} />
     </mesh>
   );
 }
