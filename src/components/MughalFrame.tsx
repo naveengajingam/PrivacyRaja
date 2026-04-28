@@ -6,57 +6,60 @@ interface Props {
 }
 
 /**
- * Ornate Mughal-arch panel with gold filigree border.
- * The arch sits on top of the content; the body is a rounded rectangle
- * with gold inset rules and corner medallions.
+ * Neon holographic HUD panel. (Same component name / API as the former
+ * MughalFrame so call sites stay identical.)  Renders a dark translucent
+ * card with a cyan neon crown bar, corner chevrons, and inner rule.
  */
 export function MughalFrame({ children, className = "" }: Props) {
   return (
     <div className={`relative ${className}`}>
-      {/* Arch top */}
+      {/* Neon crown bar (angular, not arched) */}
       <svg
-        viewBox="0 0 400 80"
+        viewBox="0 0 400 56"
         preserveAspectRatio="none"
-        className="absolute -top-[1px] left-0 h-16 w-full"
+        className="absolute -top-[1px] left-0 h-12 w-full"
         aria-hidden
       >
         <defs>
-          <linearGradient id="archGold" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#FFE9A8" />
-            <stop offset="55%" stopColor="#D4A017" />
-            <stop offset="100%" stopColor="#7a5a0e" />
+          <linearGradient id="hudBar" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="#00E5FF" stopOpacity="0" />
+            <stop offset="20%" stopColor="#00E5FF" stopOpacity="0.9" />
+            <stop offset="50%" stopColor="#FF2D6F" stopOpacity="1" />
+            <stop offset="80%" stopColor="#B967FF" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#B967FF" stopOpacity="0" />
           </linearGradient>
         </defs>
+        {/* angular crown */}
         <path
-          d="M 0 80 L 0 50 C 0 22, 60 0, 200 0 C 340 0, 400 22, 400 50 L 400 80 Z"
-          fill="url(#archGold)"
-          stroke="#FFE9A8"
-          strokeWidth="0.6"
+          d="M 0 56 L 0 20 L 60 20 L 80 4 L 320 4 L 340 20 L 400 20 L 400 56 Z"
+          fill="url(#hudBar)"
+          opacity="0.85"
         />
         <path
-          d="M 8 78 L 8 52 C 8 28, 70 8, 200 8 C 330 8, 392 28, 392 52 L 392 78"
+          d="M 0 20 L 60 20 L 80 4 L 320 4 L 340 20 L 400 20"
           fill="none"
-          stroke="oklch(0.13 0.04 285)"
-          strokeWidth="1"
+          stroke="#7af8ff"
+          strokeWidth="0.7"
+          opacity="0.9"
         />
       </svg>
 
       {/* Body */}
-      <div className="filigree-border relative mt-12 rounded-3xl bg-[oklch(0.14_0.05_285_/_0.85)] backdrop-blur-md">
-        {/* corner medallions */}
+      <div className="filigree-border scanlines relative mt-10 rounded-2xl bg-[oklch(0.08_0.04_265_/_0.85)] backdrop-blur-md">
+        {/* corner chevrons */}
         {[
-          "left-3 top-3",
-          "right-3 top-3",
-          "left-3 bottom-3",
-          "right-3 bottom-3",
+          "left-2 top-2 border-l-2 border-t-2",
+          "right-2 top-2 border-r-2 border-t-2",
+          "left-2 bottom-2 border-l-2 border-b-2",
+          "right-2 bottom-2 border-r-2 border-b-2",
         ].map((pos) => (
           <span
             key={pos}
-            className={`absolute ${pos} h-3 w-3 rounded-full bg-[var(--gold)] shadow-[0_0_10px_var(--gold)]`}
+            className={`absolute ${pos} h-4 w-4 rounded-sm border-[var(--gold)] shadow-[0_0_10px_var(--gold)]`}
           />
         ))}
-        {/* inner gold rule */}
-        <div className="pointer-events-none absolute inset-3 rounded-2xl border border-[oklch(0.74_0.13_80_/_0.35)]" />
+        {/* inner cyan rule */}
+        <div className="pointer-events-none absolute inset-3 rounded-xl border border-[var(--gold)]/25" />
         <div className="relative px-6 py-8 md:px-10 md:py-12">{children}</div>
       </div>
     </div>
